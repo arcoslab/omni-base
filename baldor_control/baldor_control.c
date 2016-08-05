@@ -356,12 +356,14 @@ void gen_pwm(void) {
 
   if (fabsf(est_freq)<MIN_EXC_FREQ_PERC*MAX_FREQ) {
     exc_volt=MIN_EXC_VOLT;
-  } else {
+  }
+  
+  else {
     exc_volt=MIN_EXC_VOLT+(MAX_EXC_VOLT-MIN_EXC_VOLT)*(fabsf(est_freq)-MIN_EXC_FREQ_PERC*MAX_FREQ)/(MAX_FREQ-MIN_EXC_FREQ_PERC*MAX_FREQ);
   }
 
   exc_volt+=(MAX_EXC_VOLT-exc_volt)*(fabsf(pi_control)/PID_MAX);
-
+  
   if (exc_volt>1.0f) {
     exc_volt=1.0f;
   }
@@ -375,52 +377,37 @@ void gen_pwm(void) {
     duty_b=0;
     duty_c=0;
   }
+  
+  /* Set timer for duty cycle a*/
+  timer_set_oc_mode(TIM1, TIM_OC1, TIM_OCM_PWM1);
+  timer_disable_oc_output(TIM1,TIM_OC1);
+  timer_enable_oc_output (TIM1, TIM_OC1N);
 
-  if (duty_a < 0.0f)
-    {
-      timer_set_oc_mode(TIM1, TIM_OC1, TIM_OCM_PWM1);
-      timer_disable_oc_output(TIM1,TIM_OC1);
-      timer_enable_oc_output (TIM1, TIM_OC1N);
-      duty_a=-duty_a;
-    }
-  else
-    {
-      timer_set_oc_mode(TIM1, TIM_OC1, TIM_OCM_PWM1);
-      timer_enable_oc_output(TIM1, TIM_OC1 );
-      timer_disable_oc_output (TIM1, TIM_OC1N);
-    }
-  if (duty_b < 0.0f)
-    {
-      timer_set_oc_mode(TIM1, TIM_OC2, TIM_OCM_PWM1);
-      timer_disable_oc_output(TIM1, TIM_OC2 );
-      timer_enable_oc_output (TIM1, TIM_OC2N);
-      duty_b=-duty_b;
-    }
-  else
-    {
-      timer_set_oc_mode(TIM1, TIM_OC2, TIM_OCM_PWM1);
-      timer_enable_oc_output(TIM1, TIM_OC2 );
-      timer_disable_oc_output (TIM1, TIM_OC2N);
-    }
-  if (duty_c < 0.0f)
-    {
-      timer_set_oc_mode(TIM1, TIM_OC3, TIM_OCM_PWM1);
-      timer_disable_oc_output(TIM1, TIM_OC3 );
-      timer_enable_oc_output (TIM1, TIM_OC3N);
-      duty_c=-duty_c;
-    }
-  else
-    {
-      timer_set_oc_mode(TIM1, TIM_OC3, TIM_OCM_PWM1);
-      timer_enable_oc_output(TIM1, TIM_OC3 );
-      timer_disable_oc_output (TIM1, TIM_OC3N);
-    }
-
-  /* Set the capture compare value for OC1. */
+  /* Set timer for duty cycle b*/
+  timer_set_oc_mode(TIM1, TIM_OC2, TIM_OCM_PWM1);
+  timer_disable_oc_output(TIM1, TIM_OC2 );
+  timer_enable_oc_output (TIM1, TIM_OC2N);
+  
+  /* Set timer for duty cycle c*/
+  timer_set_oc_mode(TIM1, TIM_OC3, TIM_OCM_PWM1);
+  timer_disable_oc_output(TIM1, TIM_OC3 );
+  timer_enable_oc_output (TIM1, TIM_OC3N);
+      
+  if (duty_a < 0.0f) {
+    duty_a=-duty_a;
+  }
+  
+  if (duty_b < 0.0f) {
+    duty_b=-duty_b;
+  }
+  
+  if (duty_c < 0.0f) {
+    duty_c=-duty_c;
+  }
+  
+  /* Set the capture compare value for OCs. */
   timer_set_oc_value(TIM1, TIM_OC1, duty_a*exc_volt*PWM_PERIOD_ARR);
-  /* Set the capture compare value for OC1. */
   timer_set_oc_value(TIM1, TIM_OC2, duty_b*exc_volt*PWM_PERIOD_ARR);
-  /* Set the capture compare value for OC1. */
   timer_set_oc_value(TIM1, TIM_OC3, duty_c*exc_volt*PWM_PERIOD_ARR);
   //tim_force_update_event(TIM1);
 }
