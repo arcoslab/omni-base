@@ -16,22 +16,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "baldor_control.h"
+#include "ad2s1210.h"
 #include <libopencm3/stm32/f4/rcc.h>
 #include <libopencm3/stm32/f4/gpio.h>
 #include <libopencm3-plus/cdcacm_one_serial/cdcacm.h>
 #include <libopencm3/stm32/f4/spi.h>
 #include <libopencm3/stm32/f4/timer.h>
 #include <libopencm3/stm32/f4/nvic.h>
-#include "baldor_control.h"
 #include <libopencm3-plus/newlib/syscall.h>
 #include <libopencm3-plus/utils/misc.h>
 #include <libopencm3-plus/stm32f4discovery/leds.h>
-#include "ad2s1210.h"
 #include <stdlib.h>
 #include <string.h>
 
+#define RES_CNT_TOP 20 /* Used in update_est_freq() */
 
+/**Global variables**/
+bool ad_ready=false; /*set true system_init(), used to prevent the timer interrupt from running if the system is not fully set up */
 
+/* Used in update_est_freq() */
+float est_freq=0.0f;
+int raw_pos=0;
+int raw_pos_last=0;
+int diff_pos=0;
+bool first_est=true;
+uint8_t ad2s1210_fault=0xFF;
+
+/*Used in pid_controller*/
+float exc_volt=0;
+float error=0;
+float p_error=0;
+float i_error=0;
+float d_error=0;
+float cmd_angle;
+float pi_control;
+float ref_freq=0*2*PI;
+bool motor_off=false;
+
+/*Used in gen_pwm*/
+float duty_a=0.0f;
+float duty_b=0.0f;
+float duty_c=0.0f;
+float test=0;
+
+/**Functions**/
+
+/***STMF4 setup & init***/
 void leds_init(void) {
   rcc_periph_clock_enable(RCC_GPIOD);
   gpio_mode_setup(GPIOD, GPIO_MODE_OUTPUT, GPIO_PUPD_NONE, GPIO12 | GPIO13 | GPIO14 | GPIO15);
@@ -184,7 +215,7 @@ void serial_conf(void) {
   }
 }
 
-bool ad_ready=false; //resolver circuit ad2s
+
 
 void system_init(void) {
   rcc_clock_setup_hse_3v3(&hse_8mhz_3v3[CLOCK_3V3_168MHZ]);
@@ -198,6 +229,7 @@ void system_init(void) {
   ad_ready=true;
 }
 
+/***Misc. Functions***/
 inline int avg_filter(int in) {
   static int window[]={0,0,0,0,0,0,0,0,0,0};
   static uint8_t pw=0;
@@ -234,13 +266,10 @@ inline int avg_filter2(int in) {
 }
 
 
-float est_freq=0.0f;
-int raw_pos=0;
-int raw_pos_last=0;
-int diff_pos=0;
-bool first_est=true;
-uint8_t ad2s1210_fault=0xFF;
-#define RES_CNT_TOP 20
+
+/***Control functions(run on timer interrupt)***/
+
+
 
 void update_est_freq(void) {
   static int res_cnt=0;
@@ -273,15 +302,7 @@ void update_est_freq(void) {
   gpio_toggle(LBLUE);
 }
 
-float exc_volt=0;
-float error=0;
-float p_error=0;
-float i_error=0;
-float d_error=0;
-float cmd_angle;
-float pi_control;
-float ref_freq=0*2*PI;
-bool motor_off=false;
+
 
 void pid_controller(void) {
   float last_error=0;
@@ -321,10 +342,7 @@ void pid_controller(void) {
 }
 
 
-float duty_a=0.0f;
-float duty_b=0.0f;
-float duty_c=0.0f;
-float test=0;
+
 
 void gen_pwm(void) {
   pid_controller();
@@ -414,6 +432,8 @@ void tim1_up_tim10_isr(void) {
   update_est_freq();
   gen_pwm();
 }
+
+/**MAIN**/
 
 int main(void)
 {
