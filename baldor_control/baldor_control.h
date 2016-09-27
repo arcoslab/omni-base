@@ -40,5 +40,3 @@ void gen_pwm(void);
 #define TICK_PERIOD (1.0f/PWMFREQ_F)
 #define PI 3.1416f
 #define RAW_TO_RAD(RAW) ((RAW)*2.0f*PI/(1<<16))
-
-

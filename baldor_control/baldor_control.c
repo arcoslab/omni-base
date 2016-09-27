@@ -31,6 +31,7 @@
 #include <string.h>
 
 #define RES_CNT_TOP 20 /* Used in update_est_freq() */
+#define MOTOR_ID 1
 
 /**Global variables**/
 bool ad_ready=false; /*set true system_init(), used to prevent the timer interrupt from running if the system is not fully set up */
@@ -424,54 +425,35 @@ void tim1_up_tim10_isr(void) {
 
 int main(void)
 {
-  int i;
-  int c=0;
-  char cmd_s[50]="";
-  char cmd[10]="";
-  float value=0;
+  bool comm=false;
+  int c = 0;
+  char cmd_s[50] = '';
   system_init();
 
-
-  while(true) {
-    if ((poll(stdin) > 0)) {
-      i=0;
-      if (poll(stdin) > 0) {
-	c=0;
-	while (c!='\r') {
-	  c=getc(stdin);
-	  cmd_s[i]=c;
-	  i++;
-	  //putc(c, stdout);
-	}
-	cmd_s[i]='\0';
-      }
-      //printf("%s", cmd_s);
-      sscanf(cmd_s, "%s %f", cmd, &value);
-      if (strcmp(cmd, "f") == 0){ //set ref freq
-	//printf("New reference frequency: %f. Confirm? (Press \"y\")\n", value);
-	ref_freq=value;
-	//printf("ef: %010.5f ca: %05d\n", est_freq, raw_pos); //**************Remove comment and comment the line below
-    //printf("ef: %010.5f ca: %05d\n", ref_freq, raw_pos);
-    //printf("STM32_POSITION %010.5f ca %05d\n", ref_freq, raw_pos);
-
-    //printf("STM32_POSITION %010.5f ca %05d\n", ref_freq, raw_pos);
-    //printf("%d %010.5f ca %05d\n",STM32_POSITION, ref_freq, raw_pos);
-    printf("%d %010.5f ca: %05d ref: %6.2f\n",STM32_POSITION, est_freq, raw_pos,ref_freq);
-	if (value == 0.0f) {
-	  //motor_off=true;
-	} else {
-	  //printf("Motor on\n");
-	  motor_off=false;
-	}
-      }
+  //wait for initial comm && establish 
+  if(poll(stdin) > 0){
+    int i = 0;
+    c = getc(stdin);
+    while(c != '\r'){
+      cmd_s[i] = c;
+      i++;
+      c = getc(stdin);
     }
-
-    //printf("ad2s_fault: 0x%02X, raw_pos: %05d, raw_pos_last: %05d, diff_pos: %05d, ref_freq: %010.5f, est_freq: %010.5f, exc_volt: %04.2f, p_error: %08.5f, i_error: %04.2f, pi_control: %04.2f, cmd_angle: %04.2f\n", ad2s1210_fault, raw_pos, raw_pos_last, diff_pos, ref_freq, est_freq, exc_volt, p_error, i_error, pi_control, cmd_angle*360/(2*PI));
-    //printf("cur_angle: %05d, ref_freq: %010.5f, est_freq: %010.5f, exc_volt: %04.2f, error: %05.2f, p_error: %08.5f, i_error: %04.2f, pi_control: %08.5f, cmd_angle: %06.2f, exc_volt: %04.2f, test: %04.2f\n", raw_pos*360/(1<<16), ref_freq/(2*PI), est_freq/(2*PI), exc_volt, error, p_error, i_error, pi_control, cmd_angle*360/(2*PI), exc_volt, test);
-    //printf("ef: %010.5f ca: %6.5f\n", est_freq, ref_freq);
-    //printf("ef: %010.5f ca: %05d\n", ref_freq, raw_pos);
-    //printf("%d %010.5f ca %05d\n",STM32_POSITION, ref_freq, raw_pos);
+    if(strcmp(cmd_s, "mensaje controlador") == 0){
+      printf("Motor id: %d", MOTOR_ID);
+      i = 0;
+      c = getc(stdin);
+      while(c != '\r'){
+	cmd_s[i] = c; //clear cmd_s
+	i++;
+	c = getc(stdin);
+      }
+      //finish ack msg
+    }
   }
+  //print inital pos
+
+  //loop for listen rel and print vel
 
   return(0);
 }
