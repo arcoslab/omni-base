@@ -31,6 +31,11 @@
 #include <string.h>
 
 #define RES_CNT_TOP 20 /* Used in update_est_freq() */
+#define FILTER_LEN 100
+#define MOTOR_ID 1
+#define MSG_SIZE 50
+#define CMD_SIZE 10
+#define MISS_MSGS 3
 
 /**Global variables**/
 bool ad_ready=false; /*set true system_init(), used to prevent the timer interrupt from running if the system is not fully set up */
@@ -241,7 +246,6 @@ inline int avg_filter(int in) {
   return((window[0]+window[1]+window[2]+window[3]+window[4]+window[5]+window[6]+window[7]+window[8]+window[9])/10);
 }
 
-#define FILTER_LEN 100
 inline int avg_filter2(int in) {
   static int filter_window[FILTER_LEN];
   static uint8_t pw=0;
@@ -420,58 +424,62 @@ void tim1_up_tim10_isr(void) {
   gen_pwm();
 }
 
+void read_serial(char* buffer){
+    int i = 0;
+    memset(buffer,0,MSG_SIZE);
+    c = getc(stdin);
+    while(c != '\r'){
+      buffer[i] = c;
+      i++;
+      c = getc(stdin);
+    }    
+	cmd_s[i]='\0';
+}
+
+void delay(int milis){
+	int i;
+	for (i = 0; i < (milis * 50000); i++)    /* Wait a bit. */
+		__asm__("nop");
+}
+
 /**MAIN**/
 
-int main(void)
-{
-  int i;
-  int c=0;
-  char cmd_s[50]="";
-  char cmd[10]="";
-  float value=0;
-  system_init();
+int main(void){
+    int msg_count = 0;
+    char sspd, gspd, gpos = ''; 
+    char cmd_s[MSG_SIZE] = "";
+    float value = 0;
+    system_init();
 
-
-  while(true) {
-    if ((poll(stdin) > 0)) {
-      i=0;
-      if (poll(stdin) > 0) {
-	c=0;
-	while (c!='\r') {
-	  c=getc(stdin);
-	  cmd_s[i]=c;
-	  i++;
-	  //putc(c, stdout);
-	}
-	cmd_s[i]='\0';
-      }
-      //printf("%s", cmd_s);
-      sscanf(cmd_s, "%s %f", cmd, &value);
-      if (strcmp(cmd, "f") == 0){ //set ref freq
-	//printf("New reference frequency: %f. Confirm? (Press \"y\")\n", value);
-	ref_freq=value;
-	//printf("ef: %010.5f ca: %05d\n", est_freq, raw_pos); //**************Remove comment and comment the line below
-    //printf("ef: %010.5f ca: %05d\n", ref_freq, raw_pos);
-    //printf("STM32_POSITION %010.5f ca %05d\n", ref_freq, raw_pos);
-
-    //printf("STM32_POSITION %010.5f ca %05d\n", ref_freq, raw_pos);
-    //printf("%d %010.5f ca %05d\n",STM32_POSITION, ref_freq, raw_pos);
-    printf("%d %010.5f ca: %05d ref: %6.2f\n",STM32_POSITION, est_freq, raw_pos,ref_freq);
-	if (value == 0.0f) {
-	  //motor_off=true;
-	} else {
-	  //printf("Motor on\n");
-	  motor_off=false;
-	}
-      }
+    while(true){
+        //try to read
+        if(poll(stdin)>0){
+            motor_off = false;
+            read_serial(cmd_s);
+            sscanf(cmd_s, "%c%c%c %f", sspd, gspd, gpos, value);
+            if(sspd=='1'){
+                ref_freq = value;
+                printf("speed: %010.5f", est_freq);
+            }
+            else if(gspd=='1'){
+                printf("speed: %010.5f", est_freq");
+            }
+            else if(gpos=='1'){
+                printf("%d\n", MOTOR_ID);
+            }
+            else{
+                msg_count++;
+            }
+        }
+        else{
+            msg_count++;
+        }
+        if(msg_count==MISS_MSGS){
+            motor_off = true;
+            ref_freq = 0;
+            msg_count = 0;
+        }
     }
 
-    //printf("ad2s_fault: 0x%02X, raw_pos: %05d, raw_pos_last: %05d, diff_pos: %05d, ref_freq: %010.5f, est_freq: %010.5f, exc_volt: %04.2f, p_error: %08.5f, i_error: %04.2f, pi_control: %04.2f, cmd_angle: %04.2f\n", ad2s1210_fault, raw_pos, raw_pos_last, diff_pos, ref_freq, est_freq, exc_volt, p_error, i_error, pi_control, cmd_angle*360/(2*PI));
-    //printf("cur_angle: %05d, ref_freq: %010.5f, est_freq: %010.5f, exc_volt: %04.2f, error: %05.2f, p_error: %08.5f, i_error: %04.2f, pi_control: %08.5f, cmd_angle: %06.2f, exc_volt: %04.2f, test: %04.2f\n", raw_pos*360/(1<<16), ref_freq/(2*PI), est_freq/(2*PI), exc_volt, error, p_error, i_error, pi_control, cmd_angle*360/(2*PI), exc_volt, test);
-    //printf("ef: %010.5f ca: %6.5f\n", est_freq, ref_freq);
-    //printf("ef: %010.5f ca: %05d\n", ref_freq, raw_pos);
-    //printf("%d %010.5f ca %05d\n",STM32_POSITION, ref_freq, raw_pos);
-  }
-
-  return(0);
+    return(0);
 }
