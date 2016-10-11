@@ -28,6 +28,15 @@ class Motor(object):
             break
         return msg
 
-    def serial_write(self):
+    def serial_write(self, msg):
         # REVISAR QUE EL MENSAJE ES VALIDO #
+        if not self.serial_comm.is_open:
+            self.serial_comm.open()
+        for i in range(self.RETRY):
+            try:
+                msg = self.serial_comm.write(msg)  # FALTA NUMERO DE BYTES
+            except serial.SerialException:
+                continue
+            break
+
         return None
