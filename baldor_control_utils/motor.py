@@ -9,11 +9,11 @@ class Motor(object):
     def __init__(self, serial_port_num):
         self.serial_device = "/dev/ttyACM" + str(serial_port_num)
         # Ver si ocupa un try
-        self.serial_comm = serial.Serial(
-            self.serial_device, baudrate=self.BAUDRATE, timeout=self.TIMEOUT)
-        self.serial_write()
-        msg = self.serial_read()
-        self.motor_pos = msg['motor_pos']
+        self.serial_comm = serial.Serial()
+        self.serial_comm.port = self.serial_device
+        self.serial_comm.baudrate = self.BAUDRATE
+        self.serial_comm.timeout = self.TIMEOUT
+        self.serial_comm.open()
 
     def serial_read(self):
         # LOGICA DE PARSEO #
