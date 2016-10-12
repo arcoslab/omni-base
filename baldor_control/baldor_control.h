@@ -26,6 +26,8 @@ inline int avg_filter(int);
 inline int avg_filter2(int);
 void pid_controller(void);
 void gen_pwm(void);
+void read_serial(char* buffer);
+void delay(int);
 
 #include "motor.h"
 #include <math.h>

@@ -426,6 +426,7 @@ void tim1_up_tim10_isr(void) {
 
 void read_serial(char* buffer){
     int i = 0;
+    char c = ' ';
     memset(buffer,0,MSG_SIZE);
     c = getc(stdin);
     while(c != '\r'){
@@ -433,7 +434,7 @@ void read_serial(char* buffer){
       i++;
       c = getc(stdin);
     }    
-	cmd_s[i]='\0';
+	buffer[i]='\0';
 }
 
 void delay(int milis){
@@ -446,8 +447,8 @@ void delay(int milis){
 
 int main(void){
     int msg_count = 0;
-    char sspd, gspd, gpos = ''; 
-    char cmd_s[MSG_SIZE] = "";
+    char sspd, gspd, gpos = ' '; 
+    char cmd_s[MSG_SIZE] = " ";
     float value = 0;
     system_init();
 
@@ -459,10 +460,10 @@ int main(void){
             sscanf(cmd_s, "%c%c%c %f", sspd, gspd, gpos, value);
             if(sspd=='1'){
                 ref_freq = value;
-                printf("speed: %010.5f", est_freq);
+                printf("speed: %010.5f\n", est_freq);
             }
             else if(gspd=='1'){
-                printf("speed: %010.5f", est_freq");
+                printf("speed: %010.5f\n", est_freq");
             }
             else if(gpos=='1'){
                 printf("%d\n", MOTOR_ID);
