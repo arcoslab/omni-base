@@ -6,6 +6,7 @@ class Motor(object):
     BAUDRATE = 921600
     TIMEOUT = 1
     RETRY = 3
+    MSG_LENGTH = 15
 
     def __init__(self, serial_port_num):
         self.serial_device = "/dev/ttyACM" + str(serial_port_num)
@@ -22,7 +23,7 @@ class Motor(object):
             self.serial_comm.open()
         for i in range(self.RETRY):
             try:
-                msg = self.serial_comm.read()  # FALTA NUMERO DE BYTES
+                msg = self.serial_comm.read(self.MSG_LENGTH)  # FALTA NUMERO DE BYTES
             except serial.SerialException:
                 continue
             break
@@ -34,9 +35,8 @@ class Motor(object):
             self.serial_comm.open()
         for i in range(self.RETRY):
             try:
-                msg = self.serial_comm.write(msg)  # FALTA NUMERO DE BYTES
+                msg = self.serial_comm.write(msg+"\n\r")  # FALTA NUMERO DE BYTES
             except serial.SerialException:
                 continue
             break
-
         return None

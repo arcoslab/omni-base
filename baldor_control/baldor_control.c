@@ -449,7 +449,7 @@ int main(void){
     int msg_count = 0;
     char sspd, gspd, gpos = ' '; 
     char cmd_s[MSG_SIZE] = " ";
-    float value = 0;
+    float value = 0.0;
     system_init();
 
     while(true){
@@ -457,16 +457,16 @@ int main(void){
         if(poll(stdin)>0){
             motor_off = false;
             read_serial(cmd_s);
-            sscanf(cmd_s, "%c%c%c %f", sspd, gspd, gpos, value);
+            sscanf(cmd_s, "%c%c%c %f\n", &sspd, &gspd, &gpos, &value);
             if(sspd=='1'){
                 ref_freq = value;
-                printf("speed: %010.5f\n", est_freq);
+                printf("%010.5f", est_freq);
             }
             else if(gspd=='1'){
-                printf("speed: %010.5f\n", est_freq");
+                printf("%010.5f", est_freq");
             }
             else if(gpos=='1'){
-                printf("%d\n", MOTOR_ID);
+                printf("%d", MOTOR_ID);
             }
             else{
                 msg_count++;
