@@ -62,9 +62,12 @@ if True:
 
         #-------------------------Ommni-directional base algorithm---------------------
         #------------------------------------------------------------------------------
+
+        #velocity vector
         left_x = -js.get_axis(1)
         left_y = js.get_axis(0)
 
+        #rotation vector
         right_x = js.get_axis(2)
         right_y = -js.get_axis(3)
 
