@@ -19,10 +19,10 @@ class Motor(object):
 
     def serial_read(self):
         msg = None
-        if not self.serial_comm.is_open:
-            self.serial_comm.open()
         for i in range(self.RETRY):
             try:
+                if not self.serial_comm.is_open:
+                    self.serial_comm.open()
                 msg = self.serial_comm.read(self.MSG_LENGTH)  # FALTA NUMERO DE BYTES
             except serial.SerialException:
                 continue
@@ -31,10 +31,10 @@ class Motor(object):
 
     def serial_write(self, msg):
         # REVISAR QUE EL MENSAJE ES VALIDO #
-        if not self.serial_comm.is_open:
-            self.serial_comm.open()
         for i in range(self.RETRY):
-            try:
+            try:                
+                if not self.serial_comm.is_open:
+                    self.serial_comm.open()
                 msg = self.serial_comm.write(msg+"\n\r")  # FALTA NUMERO DE BYTES
             except serial.SerialException:
                 continue
