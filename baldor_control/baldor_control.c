@@ -462,10 +462,10 @@ int main(void){
                 ref_freq = value;
                 printf("%010.5f", est_freq);
             }
-            else if(gspd=='1'){
+            if(gspd=='1'){
                 printf("%010.5f", est_freq");
             }
-            else if(gpos=='1'){
+            if(gpos=='1'){
                 printf("%d", MOTOR_ID);
             }
             else{
