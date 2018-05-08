@@ -1,2 +1,5 @@
-# Open-coroco
-This is a reimplentation of the open-coroco project. The old code base grew unmantainable, we aim to add a cleaner better organized and more usable version of the old code.
+# Omni-base
+
+This is the code that controls the onmidirectional base of the humanoid robot.
+
+This code currently works with a STM32F3 and a resolver.
